@@ -1,6 +1,7 @@
 2018-06-06  Kevin Ushey  <kevinushey@gmail.com>
 
     * inst/include/Rcpp/api/meat/Rcpp_eval.h: Use symbols from base
+    * inst/include/Rcpp/exceptions.h: Update is_Rcpp_eval_call
 
 2018-05-09  Dirk Eddelbuettel  <edd@debian.org>
 

@@ -206,14 +206,16 @@ namespace internal {
     inline bool is_Rcpp_eval_call(SEXP expr) {
         SEXP sys_calls_symbol = Rf_install("sys.calls");
         SEXP identity_symbol = Rf_install("identity");
-        SEXP identity_fun = Rf_findFun(identity_symbol, R_BaseEnv);
+        SEXP identity_fun = Rf_findFun(identity_symbol, R_BaseNamespace);
         SEXP tryCatch_symbol = Rf_install("tryCatch");
+        SEXP tryCatch_fun = Rf_findFun(tryCatch_symbol, R_BaseNamespace);
         SEXP evalq_symbol = Rf_install("evalq");
+        SEXP evalq_fun = Rf_findFun(evalq_symbol, R_BaseNamespace);
 
         return TYPEOF(expr) == LANGSXP &&
             Rf_length(expr) == 4 &&
-            nth(expr, 0) == tryCatch_symbol &&
-            CAR(nth(expr, 1)) == evalq_symbol &&
+            nth(expr, 0) == tryCatch_fun &&
+            CAR(nth(expr, 1)) == evalq_fun &&
             CAR(nth(nth(expr, 1), 1)) == sys_calls_symbol &&
             nth(nth(expr, 1), 2) == R_GlobalEnv &&
             nth(expr, 2) == identity_fun &&
