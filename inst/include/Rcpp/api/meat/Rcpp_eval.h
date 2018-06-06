@@ -24,7 +24,7 @@
 // outer definition from RcppCommon.h
 #if defined(RCPP_USE_UNWIND_PROTECT)
   #if (defined(RCPP_PROTECTED_EVAL) && defined(R_VERSION) && R_VERSION >= R_Version(3, 5, 0))
-     // file-local and only used here 
+     // file-local and only used here
      #define RCPP_USE_PROTECT_UNWIND
   #endif
 #endif
@@ -97,20 +97,23 @@ namespace internal {
 
 inline SEXP Rcpp_eval(SEXP expr, SEXP env) {
 
-    // 'identity' function used to capture errors, interrupts
-    SEXP identity = Rf_findFun(::Rf_install("identity"), R_BaseNamespace);
-
-    if (identity == R_UnboundValue) {
-        stop("Failed to find 'base::identity()'");
-    }
+    static SEXP tryCatch  = ::Rf_findFun(::Rf_install("tryCatch"), R_BaseNamespace);
+    static SEXP identity  = ::Rf_findFun(::Rf_install("identity"), R_BaseNamespace);
+    static SEXP evalq     = ::Rf_findFun(::Rf_install("evalq"), R_BaseNamespace);
+    static SEXP error     = ::Rf_install("error");
+    static SEXP interrupt = ::Rf_install("interrupt");
 
     // define the evalq call -- the actual R evaluation we want to execute
-    Shield<SEXP> evalqCall(Rf_lang3(::Rf_install("evalq"), expr, env));
+    // TODO: this seems superfluous; can't we just evaluate the call directly
+    // in the requested environment? not changing for now just because there
+    // might be R packages out there making assumptions about the callstack
+    // that we shouldn't change just yet
+    Shield<SEXP> evalqCall(Rf_lang3(evalq, expr, env));
 
     // define the call -- enclose with `tryCatch` so we can record and forward error messages
-    Shield<SEXP> call(Rf_lang4(::Rf_install("tryCatch"), evalqCall, identity, identity));
-    SET_TAG(CDDR(call), ::Rf_install("error"));
-    SET_TAG(CDDR(CDR(call)), ::Rf_install("interrupt"));
+    Shield<SEXP> call(Rf_lang4(tryCatch, evalqCall, identity, identity));
+    SET_TAG(CDDR(call), error);
+    SET_TAG(CDDR(CDR(call)), interrupt);
 
 #if defined(RCPP_USE_UNWIND_PROTECT)
     Shield<SEXP> res(::Rf_eval(call, R_GlobalEnv))			// execute the call
